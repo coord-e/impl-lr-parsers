@@ -1,0 +1,1 @@
+NonTerminal = Data.define(:name)
