@@ -89,10 +89,10 @@ class ParsingTable::Builder
         else
           new_state_index = @states.size
           @states << State.new(item_set: advanced_items, transitions: {})
+          visit_state(new_state_index)
           new_state_index
         end
       state.transitions[symbol] = new_state_index
-      visit_state(new_state_index)
     end
   end
 
