@@ -7,7 +7,7 @@ class ParsingTable::Builder
     end
   end
 
-  DFAState = Data.define(:item_set, :transitions)
+  State = Data.define(:item_set, :transitions)
 
   def initialize(rules:)
     @rules = rules
@@ -25,7 +25,7 @@ class ParsingTable::Builder
   end
 
   def build
-    @states << DFAState.new(item_set: closure_of([initial_item]), transitions: {})
+    @states << State.new(item_set: closure_of([initial_item]), transitions: {})
     visit_state(0)
     puts
     puts "=== STATES"
@@ -88,7 +88,7 @@ class ParsingTable::Builder
           new_state_index
         else
           new_state_index = @states.size
-          @states << DFAState.new(item_set: advanced_items, transitions: {})
+          @states << State.new(item_set: advanced_items, transitions: {})
           new_state_index
         end
       state.transitions[symbol] = new_state_index
