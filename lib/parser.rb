@@ -1,8 +1,15 @@
 class Parser
+  Node = Data.define(:name, :children) do
+    def to_s
+      "#{name}(#{children.map(&:to_s).join(" ")})"
+    end
+  end
+
   def initialize(table:, rules:)
     @table = table
     @rules = rules
     @stack = [0]
+    @tree = []
   end
 
   def parse(tokens)
@@ -10,6 +17,7 @@ class Parser
     tokens.each do |token|
       consume(token)
     end
+    puts "tree #{@tree.first.to_s}"
   end
 
   def consume(token)
@@ -18,6 +26,8 @@ class Parser
     in ParsingTable::State::ShiftAction(state_index:)
       puts "shift #{state_index}"
       push(state_index)
+
+      @tree << token
     in ParsingTable::State::ReduceAction(rule_index:)
       rule = @rules[rule_index]
       puts "reduce #{rule.lhs.name}"
@@ -25,6 +35,10 @@ class Parser
         pop
       end
       push(current_state.goto[rule.lhs])
+
+      children = @tree.pop(rule.rhs.size)
+      @tree << Node.new(name: rule.lhs.name, children:)
+
       consume(token)
     in ParsingTable::State::AcceptAction
       puts "accept"
