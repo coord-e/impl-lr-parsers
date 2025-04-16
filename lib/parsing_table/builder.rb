@@ -38,6 +38,7 @@ class ParsingTable::Builder
     end
     puts
     puts "=== TRANSITIONS"
+    STDOUT.puts "\t*\t+\t0\t1\tE\tB"
     @states.each_with_index do |row, i|
       STDOUT.print "#{i}\t"
       ['*', '+', '0', '1', NonTerminal.new('E'), NonTerminal.new('B')].each do |s|

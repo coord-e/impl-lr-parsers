@@ -27,7 +27,7 @@ TABLE = ParsingTable::Builder.new(rules: RULES).build
 
 puts
 puts "=== TABLE"
-STDOUT.puts "\t*\t+\t0\t1\tgoto"
+STDOUT.puts "\t*\t+\t0\t1\t$\tgoto"
 TABLE.states.each_with_index do |state, index|
   STDOUT.print "#{index}:\t"
   ['*', '+', '0', '1', '$'].each do |t|

@@ -6,6 +6,7 @@ class Parser
   end
 
   def parse(tokens)
+    puts "parse #{tokens}"
     tokens.each do |token|
       consume(token)
     end
