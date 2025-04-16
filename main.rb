@@ -2,7 +2,6 @@ require_relative 'lib/symbol'
 require_relative 'lib/rule'
 require_relative 'lib/parsing_table'
 require_relative 'lib/parsing_table/builder'
-require_relative 'lib/parsing_table/builder/lr1'
 require_relative 'lib/parser'
 
 S = NonTerminal.new(name: 'S')

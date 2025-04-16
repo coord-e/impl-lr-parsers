@@ -1,10 +1,10 @@
 require 'set'
 
 module ParsingTable::Builder
-  class LR1
-    Item = Data.define(:rule_index, :position, :lookahead) do
+  class LR0
+    Item = Data.define(:rule_index, :position) do
       def advanced
-        Item.new(rule_index:, position: position + 1, lookahead:)
+        Item.new(rule_index:, position: position + 1)
       end
     end
 
@@ -13,6 +13,16 @@ module ParsingTable::Builder
     def initialize(rules:)
       @rules = rules
       @states = []
+
+      # TODO: ?
+      @all_tokens = Set.new(['$'])
+      @rules.each do |rule|
+        rule.rhs.each do |sym|
+          unless sym.is_a?(NonTerminal)
+            @all_tokens << sym
+          end
+        end
+      end
     end
 
     def build
@@ -24,7 +34,7 @@ module ParsingTable::Builder
         puts
         puts "==== State #{i}"
         row.item_set.each do |item|
-          puts "[#{@rules[item.rule_index].to_s(item.position)}\t, #{item.lookahead.inspect}]"
+          puts @rules[item.rule_index].to_s(item.position)
         end
       end
       puts
@@ -50,16 +60,16 @@ module ParsingTable::Builder
             actions[symbol] = ::ParsingTable::State::ShiftAction.new(next_state_index)
           end
         end
-        state.item_set.select { |item| reducing_item?(item) }.each do |reducing_item|
-          action = ::ParsingTable::State::ReduceAction.new(reducing_item.rule_index)
-          if actions[reducing_item.lookahead]
-            raise "conflict: at [#{state_index},#{reducing_item.lookahead}], want #{action.to_s} but already #{actions[reducing_item.lookahead]}"
+        if state.item_set.any? { |item| item.rule_index == 0 && item.position == @rules[0].rhs.size }
+          actions['$'] = ::ParsingTable::State::AcceptAction.new
+        end
+        if (reducing_item = state.item_set.find { |item| reducing_item?(item) && item.rule_index > 0 })
+          reducing_action = ::ParsingTable::State::ReduceAction.new(reducing_item.rule_index)
+          unless actions.empty?
+            conflicting_token, conflicting_action = actions.first
+            raise "conflict: at [#{state_index},#{conflicting_token}], want #{reducing_action.to_s} but already #{conflicting_action.to_s}"
           end
-          if reducing_item.rule_index == 0
-            actions[reducing_item.lookahead] = ::ParsingTable::State::AcceptAction.new
-          else
-            actions[reducing_item.lookahead] = ::ParsingTable::State::ReduceAction.new(reducing_item.rule_index)
-          end
+          actions = @all_tokens.map { |t| [t, reducing_action] }.to_h
         end
         ::ParsingTable::State.new(actions:, goto:)
       end
@@ -73,7 +83,7 @@ module ParsingTable::Builder
     private def visit_state(state_index)
       state = @states[state_index]
       state.item_set.group_by { |item| symbol_at(item) }.each do |symbol, items|
-        next if symbol == '$'
+        next if symbol.nil?
 
         advanced_items = closure_of(items.map(&:advanced))
         new_state_index =
@@ -109,47 +119,16 @@ module ParsingTable::Builder
       return unless symbol.is_a?(NonTerminal)
 
       rules_for(symbol).flat_map do |_rule, rule_index|
-        first_terminals(following_symbols(item.advanced) + [item.lookahead]).each do |lookahead|
-          concurrent_item = Item.new(rule_index:, position: 0, lookahead:)
-          unless acc.include?(concurrent_item)
-            acc << concurrent_item
-            collect_concurrent_items(acc, concurrent_item)
-          end
+        concurrent_item = Item.new(rule_index:, position: 0)
+        unless acc.include?(concurrent_item)
+          acc << concurrent_item
+          collect_concurrent_items(acc, concurrent_item)
         end
-      end
-    end
-
-    private def following_symbols(item)
-      @rules[item.rule_index].rhs[item.position..]
-    end
-
-    private def first_terminals(symbols)
-      head = symbols.first
-      return Set.new unless head
-
-      case head
-      when NonTerminal
-        result = Set.new
-        rules_for(head).each do |rule, _index|
-          result.merge(first_terminals(rule.rhs))
-        end
-        if nullable?(head)
-          result.merge(first_terminals(symbols[1..]))
-        end
-        result
-      else
-        Set.new([head])
-      end
-    end
-
-    private def nullable?(nonterminal)
-      rules_for(nonterminal).any? do |rule, _index|
-        rule.rhs.all? { |s| s.is_a?(NonTerminal) } && rule.rhs.all? { |s| nullable?(s) }
       end
     end
 
     private def symbol_at(item)
-      @rules[item.rule_index].rhs[item.position] || '$'
+      @rules[item.rule_index].rhs[item.position]
     end
 
     private def rules_for(non_terminal)
@@ -157,7 +136,7 @@ module ParsingTable::Builder
     end
 
     private def initial_item
-      Item.new(rule_index: 0, position: 0, lookahead: '$')
+      Item.new(rule_index: 0, position: 0)
     end
   end
 end
