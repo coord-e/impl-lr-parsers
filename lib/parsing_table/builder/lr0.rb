@@ -16,7 +16,7 @@ module ParsingTable::Builder
       if state.item_set.any? { |item| item.rule_index == 0 && item.position == @rules[0].rhs.size }
         actions['$'] = ::ParsingTable::State::AcceptAction.new
       end
-      if (reducing_item = state.item_set.find { |item| reducing_item?(item) && item.rule_index > 0 })
+      state.item_set.select { |item| reducing_item?(item) && item.rule_index > 0 }.each do |reducing_item|
         reducing_action = ::ParsingTable::State::ReduceAction.new(reducing_item.rule_index)
         unless actions.empty?
           conflicting_token, conflicting_action = actions.first
