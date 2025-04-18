@@ -26,12 +26,15 @@ puts
 puts "=== TABLE"
 STDOUT.puts "\t*\t+\t0\t1\t$\tgoto"
 TABLE.states.each_with_index do |state, index|
+  next if state.nil?
   STDOUT.print "#{index}:\t"
   ['*', '+', '0', '1', '$'].each do |t|
     STDOUT.print "#{state.actions[t].to_s || 'nil'}\t"
   end
   STDOUT.puts state.goto.transform_keys(&:name)
 end
+
+puts "#states #{TABLE.states.compact.size}"
 
 parser = Parser.new(table: TABLE, rules: RULES)
 
