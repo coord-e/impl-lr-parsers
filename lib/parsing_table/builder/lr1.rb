@@ -2,9 +2,9 @@ require 'set'
 
 module ParsingTable::Builder
   class LR1
-    Item = Data.define(:rule_index, :position, :lookahead) do
+    Item = Data.define(:rule_index, :position, :lookahead_set) do
       def advanced
-        Item.new(rule_index:, position: position + 1, lookahead:)
+        Item.new(rule_index:, position: position + 1, lookahead_set:)
       end
     end
 
@@ -24,7 +24,7 @@ module ParsingTable::Builder
         puts
         puts "==== State #{i}"
         row.item_set.each do |item|
-          puts "[#{@rules[item.rule_index].to_s(item.position)}\t, #{item.lookahead.inspect}]"
+          puts "[#{@rules[item.rule_index].to_s(item.position)}\t, #{item.lookahead_set}]"
         end
       end
       puts
@@ -52,13 +52,15 @@ module ParsingTable::Builder
         end
         state.item_set.select { |item| reducing_item?(item) }.each do |reducing_item|
           action = ::ParsingTable::State::ReduceAction.new(reducing_item.rule_index)
-          if actions[reducing_item.lookahead]
-            raise "conflict: at [#{state_index},#{reducing_item.lookahead}], want #{action.to_s} but already #{actions[reducing_item.lookahead]}"
-          end
-          if reducing_item.rule_index == 0
-            actions[reducing_item.lookahead] = ::ParsingTable::State::AcceptAction.new
-          else
-            actions[reducing_item.lookahead] = ::ParsingTable::State::ReduceAction.new(reducing_item.rule_index)
+          reducing_item.lookahead_set.each do |lookahead|
+            if actions[lookahead]
+              raise "conflict: at [#{state_index},#{lookahead}], want #{action.to_s} but already #{actions[lookahead]}"
+            end
+            if reducing_item.rule_index == 0
+              actions[lookahead] = ::ParsingTable::State::AcceptAction.new
+            else
+              actions[lookahead] = ::ParsingTable::State::ReduceAction.new(reducing_item.rule_index)
+            end
           end
         end
         ::ParsingTable::State.new(actions:, goto:)
@@ -109,12 +111,15 @@ module ParsingTable::Builder
       return unless symbol.is_a?(NonTerminal)
 
       rules_for(symbol).flat_map do |_rule, rule_index|
-        first_terminals(following_symbols(item.advanced) + [item.lookahead]).each do |lookahead|
-          concurrent_item = Item.new(rule_index:, position: 0, lookahead:)
-          unless acc.include?(concurrent_item)
-            acc << concurrent_item
-            collect_concurrent_items(acc, concurrent_item)
+        lookahead_set = Set.new.tap do |s|
+          item.lookahead_set.each do |lookahead|
+            s.merge(first_terminals(following_symbols(item.advanced) + [lookahead]))
           end
+        end
+        concurrent_item = Item.new(rule_index:, position: 0, lookahead_set:)
+        unless acc.include?(concurrent_item)
+          acc << concurrent_item
+          collect_concurrent_items(acc, concurrent_item)
         end
       end
     end
@@ -157,7 +162,7 @@ module ParsingTable::Builder
     end
 
     private def initial_item
-      Item.new(rule_index: 0, position: 0, lookahead: '$')
+      Item.new(rule_index: 0, position: 0, lookahead_set: Set.new(['$']))
     end
   end
 end
