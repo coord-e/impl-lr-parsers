@@ -69,7 +69,11 @@ module ParsingTable::Builder
         io.puts
         io.puts "==== State #{i}"
         row.item_set.each do |item|
-          io.puts @rules[item.rule_index].to_s(item.position)
+          io.print @rules[item.rule_index].to_s(item.position)
+          if item.lookahead_set
+            io.print "\t, {#{item.lookahead_set.map(&:inspect).join(", ")}}"
+          end
+          io.puts
         end
       end
     end
