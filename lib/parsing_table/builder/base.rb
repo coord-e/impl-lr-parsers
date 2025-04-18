@@ -1,3 +1,5 @@
+require 'set'
+
 module ParsingTable::Builder
   class Base
     Item = Data.define(:rule_index, :position, :lookahead_set) do

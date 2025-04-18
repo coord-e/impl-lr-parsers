@@ -1,4 +1,4 @@
-require 'set'
+require_relative './lr1'
 
 module ParsingTable::Builder
   class LALR1 < LR1

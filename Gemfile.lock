@@ -1,17 +1,13 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    rbtree (0.4.6)
     set (1.1.1)
-    sorted_set (1.0.3)
-      rbtree
-      set (~> 1.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  sorted_set
+  set
 
 BUNDLED WITH
    2.4.19
