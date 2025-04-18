@@ -42,9 +42,13 @@ module ParsingTable::Builder
     private def build_parising_table
       table = @states.each_with_index.map do |state, state_index|
         next unless state
-        node_to_state(state_index)
+        to_table_state(state_index)
       end
       ParsingTable.new(table)
+    end
+
+    private def to_table_state(state_index)
+      raise NoMethodError
     end
 
     def all_symbols

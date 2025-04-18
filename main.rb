@@ -23,7 +23,7 @@ table.states.each_with_index do |state, index|
   next if state.nil?
   STDOUT.print "#{index}:\t"
   builder.all_terminals.each do |t|
-    STDOUT.print "#{state.actions[t].to_s || 'nil'}\t"
+    STDOUT.print "#{state.actions[t]&.to_s || 'nil'}\t"
   end
   STDOUT.puts state.goto.transform_keys(&:name)
 end

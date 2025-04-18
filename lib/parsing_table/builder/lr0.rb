@@ -2,7 +2,7 @@ require_relative './base'
 
 module ParsingTable::Builder
   class LR0 < Base
-    def node_to_state(state_index)
+    def to_table_state(state_index)
       state = @states[state_index]
       actions = {}
       goto = {}
