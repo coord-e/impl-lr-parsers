@@ -18,6 +18,12 @@ class Parser
       consume(token)
     end
     puts "tree #{@tree.first.to_s}"
+    reset!
+  end
+
+  def reset!
+    @stack = [0]
+    @tree = []
   end
 
   def consume(token)
