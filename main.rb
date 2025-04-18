@@ -20,15 +20,16 @@ puts "=== RULES"
 RULES.each_with_index do |rule, index|
   puts "#{index}:\t#{rule.to_s}"
 end
-TABLE = ParsingTable::Builder::LR1.new(rules: RULES).build
+builder = ParsingTable::Builder::LALR1.new(rules: RULES)
+TABLE = builder.build
 
 puts
 puts "=== TABLE"
-STDOUT.puts "\t*\t+\t0\t1\t$\tgoto"
+STDOUT.puts "\t#{builder.all_terminals.join("\t")}\tgoto"
 TABLE.states.each_with_index do |state, index|
   next if state.nil?
   STDOUT.print "#{index}:\t"
-  ['*', '+', '0', '1', '$'].each do |t|
+  builder.all_terminals.each do |t|
     STDOUT.print "#{state.actions[t].to_s || 'nil'}\t"
   end
   STDOUT.puts state.goto.transform_keys(&:name)
